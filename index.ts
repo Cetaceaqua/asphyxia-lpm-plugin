@@ -22,6 +22,9 @@ import {
 
 import {
   rank_get,
+  rank_my_get,
+  rank_put,
+  tf_logdata_play,
   playerlog_pload,
   playerlog_psave,
   link_lpac,
@@ -73,23 +76,33 @@ export function register() {
 
   // Extra / ranking / link routes
   R.Route("kpm_rank.get", rank_get);
+  R.Route("kpm_rank.my_get", rank_my_get);
+  R.Route("kpm_rank.put", rank_put);
   R.Route("kpm_totalrank.get", rank_get);
+  R.Route("kpm_totalrank.my_get", rank_my_get);
   R.Route("kpm_playerlog.pload", playerlog_pload);
   R.Route("kpm_playerlog.psave", playerlog_psave);
   R.Route("kpm_link.LPAC00", link_lpac);
   R.Route("kpm_player.data_load", link_lpac);
 
-  // Team Fortune user data routes
+  // Team Fortune user data & session log routes
   R.Route("tf_userdata.assign", tf_userdata_assign);
   R.Route("tf_userdata.cload", tf_userdata_cload);
   R.Route("tf_userdata.csave", tf_userdata_save);
   R.Route("tf_userdata.isave", tf_userdata_save);
   R.Route("tf_userdata.iload", tf_userdata_save);
+  R.Route("tf_logdata.play", tf_logdata_play);
 
   // Medal cross-event lottery routes
   R.Route("kpu_event.status", event_status);
+  R.Route("kpu_event.regist", tf_userdata_save);
+  R.Route("kpu_event.end", tf_userdata_save);
   R.Route("ix8_event.status", event_status);
+  R.Route("ix8_event.regist", tf_userdata_save);
+  R.Route("ix8_event.end", tf_userdata_save);
   R.Route("k70_event.status", event_status);
+  R.Route("k70_event.regist", tf_userdata_save);
+  R.Route("k70_event.end", tf_userdata_save);
 
   R.Unhandled();
 
