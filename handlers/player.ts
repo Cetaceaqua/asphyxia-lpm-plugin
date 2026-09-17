@@ -42,7 +42,7 @@ export const player_pload: EPR = async (info, data, send) => {
     }
   }
 
-  console.log(`[LPM:player.pload] Sending to client: refId=${refId}, name=${profile.real_name}, nick=${profile.nick_name}, kanojo=${profile.kanojo} (1:Manaka, 2:Rinko, 3:Nene)`);
+  console.log(`[LPM:player.pload] Sending to client: refId=${refId}, name=${profile.real_name}, nick=${profile.nick_name}, kanojo=${profile.kanojo} (0:Manaka, 1:Rinko, 2:Nene)`);
 
   // Reverse engineering sub_10005830 in KPM_EAM_MOD.DLL confirms exact property types required:
   // - data/real_name: string (Type 11)
@@ -51,7 +51,7 @@ export const player_pload: EPR = async (info, data, send) => {
   // - data/birth_month: u16 (Type 5)
   // - data/birth_day: u16 (Type 5)
   // - data/blood_type: u16 (Type 5)
-  // - data/kanojo: u16 (Type 5) -> CRITICAL: If sent as s16, client refer fails and Girl becomes 0!
+  // - data/kanojo: u16 (Type 5, 0:Manaka, 1:Rinko, 2:Nene) -> CRITICAL: Must be u16!
   // - data/hair_style: u16 (Type 5)
   // - data/hair_color: u16 (Type 5)
   // - data/real_date: 8 x u16 (Type 5)

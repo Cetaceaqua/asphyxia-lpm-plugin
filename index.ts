@@ -48,10 +48,10 @@ export function register() {
 
   R.Config("default_kanojo", {
     name: "Default Girlfriend",
-    desc: "Default girlfriend for newly generated player profiles (1: Manaka, 2: Rinko, 3: Nene).",
+    desc: "Default girlfriend for newly generated player profiles (0: Manaka, 1: Rinko, 2: Nene).",
     type: "integer",
-    range: [1, 3],
-    default: 1,
+    range: [0, 2],
+    default: 0,
   });
 
   // System & Boot routes

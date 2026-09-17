@@ -231,7 +231,7 @@ export function inheritProfileFromLpac(refId: string): Profile | null {
   const nick_name = real_name;
 
   // Girlfriend mapping from LPAC00 strdata[6]
-  // '0': Manaka (1), '10000': Rinko (2), '20000': Nene (3)
+  // '0': Manaka (0), '10000': Rinko (1), '20000': Nene (2)
   const gId = str00.length > 6 ? String(str00[6]) : "0";
   let kanojo = KanojoType.MANAKA;
   if (gId === "10000") kanojo = KanojoType.RINKO;

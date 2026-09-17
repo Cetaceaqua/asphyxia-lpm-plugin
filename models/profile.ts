@@ -4,10 +4,9 @@
  */
 
 export enum KanojoType {
-  NONE = 0,
-  MANAKA = 1, // 高嶺 愛花 (Takane Manaka)
-  RINKO = 2,  // 小早川 凛子 (Kobayakawa Rinko)
-  NENE = 3,   // 姉ヶ崎 寧々 (Anegasaki Nene)
+  MANAKA = 0, // 高嶺 愛花 (Takane Manaka)
+  RINKO = 1,  // 小早川 凛子 (Kobayakawa Rinko)
+  NENE = 2,   // 姉ヶ崎 寧々 (Anegasaki Nene)
 }
 
 export interface Profile {
@@ -20,7 +19,7 @@ export interface Profile {
   birth_month?: number;    // 誕生月 (1-12)
   birth_day?: number;      // 誕生日 (1-31)
   blood_type?: number;     // 血液型 (1: A, 2: B, 3: AB, 4: O)
-  kanojo?: number;         // カノジョ (1: Manaka, 2: Rinko, 3: Nene)
+  kanojo?: number;         // カノジョ (0: Manaka, 1: Rinko, 2: Nene)
   hair_style?: number;     // 髪型
   hair_color?: number;     // 髪色
 

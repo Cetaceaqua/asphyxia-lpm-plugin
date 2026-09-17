@@ -53,7 +53,7 @@ Loads the player's core profile and girlfriend appearance.
     <birth_month __type="u16">9</birth_month>
     <birth_day __type="u16">12</birth_day>
     <blood_type __type="u16">1</blood_type>
-    <kanojo __type="u16">1</kanojo> <!-- 1: Manaka, 2: Rinko, 3: Nene -->
+    <kanojo __type="u16">0</kanojo> <!-- 0: Manaka, 1: Rinko, 2: Nene -->
     <hair_style __type="u16">1</hair_style>
     <hair_color __type="u16">1</hair_color>
     <real_date __type="u16" __count="8">0 0 0 0 0 0 0 0</real_date>
@@ -166,7 +166,7 @@ Configured in `config.json` or through the Asphyxia WebUI:
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `enable_lpac_link` | `boolean` | `true` | Enable cross-game profile linkage with *LovePlus ARCADE Colorful Clip*. |
-| `default_kanojo` | `integer` | `1` | Default girlfriend for newly created player profiles (`1`: Manaka, `2`: Rinko, `3`: Nene). |
+| `default_kanojo` | `integer` | `0` | Default girlfriend for newly created player profiles (`0`: Manaka, `1`: Rinko, `2`: Nene). |
 
 ---
 
