@@ -184,7 +184,7 @@ export const playerlog_psave: EPR = async (info, data, send) => {
 /**
  * Reads LPAC profile across Asphyxia plugin storage boundary using built-in fs module.
  */
-function loadLpacProfileCrossPlugin(refId: string): any | null {
+export function loadLpacProfileCrossPlugin(refId: string): any | null {
   if (!refId) return null;
   const targetId = refId.toUpperCase();
 
@@ -213,6 +213,75 @@ function loadLpacProfileCrossPlugin(refId: string): any | null {
   }
 
   return null;
+}
+
+/**
+ * Inherits player and girlfriend profile attributes directly from LovePlus ARCADE save data.
+ */
+export function inheritProfileFromLpac(refId: string): Profile | null {
+  const lpacDoc = loadLpacProfileCrossPlugin(refId);
+  if (!lpacDoc || !lpacDoc.usergamedata) return null;
+
+  const lpac00 = lpacDoc.usergamedata.LPAC00;
+  const lpac01 = lpacDoc.usergamedata.LPAC01;
+  const str00 = lpac00?.strdata || [];
+  const b01 = lpac01?.bindata || [];
+
+  const real_name = (str00.length > 27 && str00[27]) ? str00[27] : "彼氏";
+  const nick_name = real_name;
+
+  // Girlfriend mapping from LPAC00 strdata[6]
+  // '0': Manaka (1), '10000': Rinko (2), '20000': Nene (3)
+  const gId = str00.length > 6 ? String(str00[6]) : "0";
+  let kanojo = KanojoType.MANAKA;
+  if (gId === "10000") kanojo = KanojoType.RINKO;
+  else if (gId === "20000") kanojo = KanojoType.NENE;
+
+  // Birthday & Blood Type from LPAC00 strdata[5] (hex format e.g. "51c01")
+  const bb = str00.length > 5 && str00[5].length >= 5 ? str00[5] : "90c00";
+  const birth_month = parseInt(bb[0], 16) || 9;
+  const birth_day = parseInt(bb.slice(1, 3), 16) || 12;
+  const btHex = bb.slice(3, 5);
+  // '00': A (1), '01': B (2), '02': O (4), '03': AB (3)
+  const blood_type = btHex === "01" ? 2 : btHex === "02" ? 4 : btHex === "03" ? 3 : 1;
+
+  // Hairstyle & Color from LPAC01 bindata
+  let hair_style = 1;
+  let hair_color = 1;
+  if (b01.length >= 352) {
+    const hairType = (b01[350] << 8) | b01[351];
+    hair_style = hairType > 0 ? (hairType % 10) + 1 : 1;
+    hair_color = b01[349] > 0 ? b01[349] + 1 : 1;
+  }
+
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  console.log(`[LPM:inheritProfileFromLpac] Successfully inherited LPAC profile for refId=${refId}: kanojo=${kanojo}, name=${real_name}, bday=${birth_month}/${birth_day}, blood=${blood_type}, hair=${hair_style}/${hair_color}`);
+
+  return {
+    collection: "profile",
+    real_name,
+    nick_name,
+    nick_id: 1,
+    birth_month,
+    birth_day,
+    blood_type,
+    kanojo,
+    hair_style,
+    hair_color,
+    real_date: [0, 0, 0, 0, 0, 0, 0, 0],
+    reserved: [0, 0, 0, 0, 0],
+    reserved2: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    total_play: 0,
+    last_bet: dateStr,
+    last_play: dateStr,
+    date_result: 0,
+    dress_request: 0,
+    date_time: dateStr,
+    jp_win: 0,
+    jp_time: dateStr,
+  };
 }
 
 /**

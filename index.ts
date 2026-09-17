@@ -82,6 +82,8 @@ export function register() {
   R.Route("kpm_totalrank.my_get", rank_my_get);
   R.Route("kpm_playerlog.pload", playerlog_pload);
   R.Route("kpm_playerlog.psave", playerlog_psave);
+  R.Route("klp_link.data_load", link_lpac);
+  R.Route("kpm_link.shop_check", link_lpac);
   R.Route("kpm_link.LPAC00", link_lpac);
   R.Route("kpm_player.data_load", link_lpac);
 

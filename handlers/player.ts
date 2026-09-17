@@ -1,4 +1,5 @@
 import { Profile, KanojoType, createDefaultProfile } from "../models/profile";
+import { inheritProfileFromLpac } from "./extra";
 
 /**
  * Extracts refid from XML request data.
@@ -20,35 +21,62 @@ export const player_pload: EPR = async (info, data, send) => {
   let profile = await DB.FindOne<Profile>(refId, { collection: "profile" });
 
   if (!profile) {
-    profile = createDefaultProfile();
+    // 1. Try to inherit girlfriend and player info from LovePlus ARCADE save data
+    const isLinkEnabled = U.GetConfig("enable_lpac_link") !== false;
+    if (isLinkEnabled && refId) {
+      profile = inheritProfileFromLpac(refId);
+    }
+
+    // 2. If no LPAC save exists or linkage disabled, fallback to clean default
+    if (!profile) {
+      profile = createDefaultProfile();
+      console.log(`[LPM:player.pload] Created new default profile for refId=${refId}`);
+    } else {
+      console.log(`[LPM:player.pload] Created profile inherited from LPAC for refId=${refId}`);
+    }
+
     try {
       await DB.Insert<Profile>(refId, profile);
-      console.log(`[LPM:player.pload] Created new default profile for refId=${refId}`);
     } catch {
       // Ignore insert collision
     }
   }
 
-  console.log(`[LPM:player.pload] refId=${refId}, name=${profile.real_name}, nick=${profile.nick_name}, kanojo=${profile.kanojo}`);
+  console.log(`[LPM:player.pload] Sending to client: refId=${refId}, name=${profile.real_name}, nick=${profile.nick_name}, kanojo=${profile.kanojo} (1:Manaka, 2:Rinko, 3:Nene)`);
 
+  // Reverse engineering sub_10005830 in KPM_EAM_MOD.DLL confirms exact property types required:
+  // - data/real_name: string (Type 11)
+  // - data/nick_name: string (Type 11)
+  // - data/nick_id: u32 (Type 7)
+  // - data/birth_month: u16 (Type 5)
+  // - data/birth_day: u16 (Type 5)
+  // - data/blood_type: u16 (Type 5)
+  // - data/kanojo: u16 (Type 5) -> CRITICAL: If sent as s16, client refer fails and Girl becomes 0!
+  // - data/hair_style: u16 (Type 5)
+  // - data/hair_color: u16 (Type 5)
+  // - data/real_date: 8 x u16 (Type 5)
+  // - data/reserved: 5 x u16 (Type 5)
+  // - data/total_play: u32 (Type 7)
+  // - data/last_bet: string (Type 11, format "YYYY-MM-DD HH:MM")
+  // - data/last_play: string (Type 11, format "YYYY-MM-DD HH:MM")
+  // - data/reserved2: 10 x u32 (Type 7)
   return send.object({
     data: {
       real_name: K.ITEM("str", profile.real_name || "彼氏"),
       nick_name: K.ITEM("str", profile.nick_name || "彼氏"),
-      // Binary reverse confirms sub_100078A0 parses nick_id as 32-bit integer (Type 7)
-      nick_id: K.ITEM("s32", profile.nick_id ?? 1),
-      birth_month: K.ITEM("s16", profile.birth_month ?? 9),
-      birth_day: K.ITEM("s16", profile.birth_day ?? 12),
-      blood_type: K.ITEM("s16", profile.blood_type ?? 1),
-      kanojo: K.ITEM("s16", profile.kanojo ?? KanojoType.MANAKA),
-      hair_style: K.ITEM("s16", profile.hair_style ?? 1),
-      hair_color: K.ITEM("s16", profile.hair_color ?? 1),
-      real_date: K.ARRAY("s16", profile.real_date || [0, 0, 0, 0, 0, 0, 0, 0]),
-      reserved: K.ARRAY("s16", profile.reserved || [0, 0, 0, 0, 0]),
-      total_play: K.ITEM("s32", profile.total_play ?? 0),
+      nick_id: K.ITEM("u32", profile.nick_id ?? 1),
+      birth_month: K.ITEM("u16", profile.birth_month ?? 9),
+      birth_day: K.ITEM("u16", profile.birth_day ?? 12),
+      blood_type: K.ITEM("u16", profile.blood_type ?? 1),
+      kanojo: K.ITEM("u16", profile.kanojo ?? KanojoType.MANAKA),
+      hair_style: K.ITEM("u16", profile.hair_style ?? 1),
+      hair_color: K.ITEM("u16", profile.hair_color ?? 1),
+      real_date: K.ARRAY("u16", profile.real_date || [0, 0, 0, 0, 0, 0, 0, 0]),
+      reserved: K.ARRAY("u16", profile.reserved || [0, 0, 0, 0, 0]),
+      total_play: K.ITEM("u32", profile.total_play ?? 0),
       last_bet: K.ITEM("str", profile.last_bet || "2026-09-12 12:00"),
       last_play: K.ITEM("str", profile.last_play || "2026-09-12 12:00"),
-      reserved2: K.ARRAY("s32", profile.reserved2 || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+      reserved2: K.ARRAY("u32", profile.reserved2 || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
     },
   });
 };
