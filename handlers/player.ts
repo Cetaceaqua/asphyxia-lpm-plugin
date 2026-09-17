@@ -23,16 +23,20 @@ export const player_pload: EPR = async (info, data, send) => {
     profile = createDefaultProfile();
     try {
       await DB.Insert<Profile>(refId, profile);
+      console.log(`[LPM:player.pload] Created new default profile for refId=${refId}`);
     } catch {
       // Ignore insert collision
     }
   }
 
+  console.log(`[LPM:player.pload] refId=${refId}, name=${profile.real_name}, nick=${profile.nick_name}, kanojo=${profile.kanojo}`);
+
   return send.object({
     data: {
       real_name: K.ITEM("str", profile.real_name || "彼氏"),
       nick_name: K.ITEM("str", profile.nick_name || "彼氏"),
-      nick_id: K.ITEM("s16", profile.nick_id ?? 1),
+      // Binary reverse confirms sub_100078A0 parses nick_id as 32-bit integer (Type 7)
+      nick_id: K.ITEM("s32", profile.nick_id ?? 1),
       birth_month: K.ITEM("s16", profile.birth_month ?? 9),
       birth_day: K.ITEM("s16", profile.birth_day ?? 12),
       blood_type: K.ITEM("s16", profile.blood_type ?? 1),
@@ -60,26 +64,36 @@ export const player_psave: EPR = async (info, data, send) => {
     profile = createDefaultProfile();
   }
 
-  profile.real_name = $(data).str("real_name", profile.real_name || "彼氏");
-  profile.nick_name = $(data).str("nick_name", profile.nick_name || "彼氏");
-  profile.nick_id = $(data).number("nick_id", profile.nick_id ?? 1);
-  profile.birth_month = $(data).number("birth_month", profile.birth_month ?? 9);
-  profile.birth_day = $(data).number("birth_day", profile.birth_day ?? 12);
-  profile.blood_type = $(data).number("blood_type", profile.blood_type ?? 1);
-  profile.kanojo = $(data).number("kanojo", profile.kanojo ?? KanojoType.MANAKA);
-  profile.hair_style = $(data).number("hair_style", profile.hair_style ?? 1);
-  profile.hair_color = $(data).number("hair_color", profile.hair_color ?? 1);
+  const strField = (f: string, def: string) => $(data).str(f, "") || $(data).str(`data.${f}`, "") || def;
+  const numField = (f: string, def: number) => {
+    const v1 = $(data).number(f);
+    if (v1 !== undefined && !isNaN(v1)) return v1;
+    const v2 = $(data).number(`data.${f}`);
+    if (v2 !== undefined && !isNaN(v2)) return v2;
+    return def;
+  };
 
-  const real_date = $(data).numbers("real_date");
+  profile.real_name = strField("real_name", profile.real_name || "彼氏");
+  profile.nick_name = strField("nick_name", profile.nick_name || "彼氏");
+  profile.nick_id = numField("nick_id", profile.nick_id ?? 1);
+  profile.birth_month = numField("birth_month", profile.birth_month ?? 9);
+  profile.birth_day = numField("birth_day", profile.birth_day ?? 12);
+  profile.blood_type = numField("blood_type", profile.blood_type ?? 1);
+  profile.kanojo = numField("kanojo", profile.kanojo ?? KanojoType.MANAKA);
+  profile.hair_style = numField("hair_style", profile.hair_style ?? 1);
+  profile.hair_color = numField("hair_color", profile.hair_color ?? 1);
+
+  const real_date = $(data).numbers("real_date") || $(data).numbers("data.real_date");
   if (real_date && real_date.length > 0) profile.real_date = real_date;
 
-  const reserved = $(data).numbers("reserved");
+  const reserved = $(data).numbers("reserved") || $(data).numbers("data.reserved");
   if (reserved && reserved.length > 0) profile.reserved = reserved;
 
-  const reserved2 = $(data).numbers("reserved2");
+  const reserved2 = $(data).numbers("reserved2") || $(data).numbers("data.reserved2");
   if (reserved2 && reserved2.length > 0) profile.reserved2 = reserved2;
 
   await DB.Upsert<Profile>(refId, { collection: "profile" }, profile);
+  console.log(`[LPM:player.psave] Successfully saved profile for refId=${refId}, kanojo=${profile.kanojo}`);
   return send.success();
 };
 
@@ -88,12 +102,13 @@ export const player_psave: EPR = async (info, data, send) => {
  */
 export const player_lastp: EPR = async (info, data, send) => {
   const refId = getRefId(data);
-  const last_play = $(data).str("last_play", "");
+  const last_play = $(data).str("last_play", "") || $(data).str("data.last_play", "");
   if (refId && last_play) {
     const profile = await DB.FindOne<Profile>(refId, { collection: "profile" });
     if (profile) {
       profile.last_play = last_play;
       await DB.Update<Profile>(refId, { collection: "profile" }, profile);
+      console.log(`[LPM:player.lastp] refId=${refId}, last_play=${last_play}`);
     }
   }
   return send.success();
@@ -104,12 +119,13 @@ export const player_lastp: EPR = async (info, data, send) => {
  */
 export const player_lastb: EPR = async (info, data, send) => {
   const refId = getRefId(data);
-  const last_bet = $(data).str("last_bet", "");
+  const last_bet = $(data).str("last_bet", "") || $(data).str("data.last_bet", "");
   if (refId && last_bet) {
     const profile = await DB.FindOne<Profile>(refId, { collection: "profile" });
     if (profile) {
       profile.last_bet = last_bet;
       await DB.Update<Profile>(refId, { collection: "profile" }, profile);
+      console.log(`[LPM:player.lastb] refId=${refId}, last_bet=${last_bet}`);
     }
   }
   return send.success();
@@ -120,12 +136,13 @@ export const player_lastb: EPR = async (info, data, send) => {
  */
 export const player_ptime: EPR = async (info, data, send) => {
   const refId = getRefId(data);
-  const total_play = $(data).number("total_play", 0);
+  const total_play = $(data).number("total_play", 0) || $(data).number("data.total_play", 0);
   if (refId) {
     const profile = await DB.FindOne<Profile>(refId, { collection: "profile" });
     if (profile) {
       profile.total_play = total_play;
       await DB.Update<Profile>(refId, { collection: "profile" }, profile);
+      console.log(`[LPM:player.ptime] refId=${refId}, total_play=${total_play}`);
     }
   }
   return send.success();

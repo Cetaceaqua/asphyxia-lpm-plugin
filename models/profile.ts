@@ -42,6 +42,44 @@ export interface Profile {
   jp_time?: string;        // JP達成日時
 }
 
+export interface PlayerLog {
+  collection: "playerlog";
+  total_game: number;
+  total_bet: number;
+  total_win: number;
+  normal_play: number;
+  normal_bet: number;
+  normal_win: number;
+  normal_reach: number;
+  date_play: number;
+  date_bet: number;
+  date_win: number;
+  date_reach: number;
+  jp_play: number;
+  jp_bet: number;
+  jp_win: number;
+}
+
+export function createDefaultPlayerLog(): PlayerLog {
+  return {
+    collection: "playerlog",
+    total_game: 0,
+    total_bet: 0,
+    total_win: 0,
+    normal_play: 0,
+    normal_bet: 0,
+    normal_win: 0,
+    normal_reach: 0,
+    date_play: 0,
+    date_bet: 0,
+    date_win: 0,
+    date_reach: 0,
+    jp_play: 0,
+    jp_bet: 0,
+    jp_win: 0,
+  };
+}
+
 /**
  * Creates a default initial profile for a new player.
  */
