@@ -49,19 +49,19 @@ Loads the player's core profile and girlfriend appearance.
   <data>
     <real_name __type="str">彼氏</real_name>
     <nick_name __type="str">彼氏</nick_name>
-    <nick_id __type="s16">1</nick_id>
-    <birth_month __type="s16">9</birth_month>
-    <birth_day __type="s16">12</birth_day>
-    <blood_type __type="s16">1</blood_type>
-    <kanojo __type="s16">1</kanojo> <!-- 1: Manaka, 2: Rinko, 3: Nene -->
-    <hair_style __type="s16">1</hair_style>
-    <hair_color __type="s16">1</hair_color>
-    <real_date __type="s16" __count="8">0 0 0 0 0 0 0 0</real_date>
-    <reserved __type="s16" __count="5">0 0 0 0 0</reserved>
-    <total_play __type="s32">0</total_play>
+    <nick_id __type="u32">1</nick_id>
+    <birth_month __type="u16">9</birth_month>
+    <birth_day __type="u16">12</birth_day>
+    <blood_type __type="u16">1</blood_type>
+    <kanojo __type="u16">1</kanojo> <!-- 1: Manaka, 2: Rinko, 3: Nene -->
+    <hair_style __type="u16">1</hair_style>
+    <hair_color __type="u16">1</hair_color>
+    <real_date __type="u16" __count="8">0 0 0 0 0 0 0 0</real_date>
+    <reserved __type="u16" __count="5">0 0 0 0 0</reserved>
+    <total_play __type="u32">0</total_play>
     <last_bet __type="str">2026-09-12 12:00</last_bet>
     <last_play __type="str">2026-09-12 12:00</last_play>
-    <reserved2 __type="s32" __count="10">0 0 0 0 0 0 0 0 0 0</reserved2>
+    <reserved2 __type="u32" __count="10">0 0 0 0 0 0 0 0 0 0</reserved2>
   </data>
   ```
 
@@ -135,16 +135,14 @@ Evaluated by `CTFLogUserPlaySave` in `tf_eam_mod.dll`. Triggered on card logout 
 
 ---
 
-### 2.5 LovePlus ARCADE Linkage (`kpm_link.*` & `kpm_player.data_load`)
+### 2.5 LovePlus ARCADE Linkage (`klp_link.*`, `kpm_link.*` & `kpm_player.data_load`)
 
 Allows players who previously played *LovePlus ARCADE Colorful Clip* (`LPAC`) to carry over their girlfriend intimacy, nicknames, hairstyle, and wardrobe:
 
-- **Endpoint**: `kpm_link.LPAC00` / `kpm_player.data_load`
+- **Official Endpoints**: `klp_link.data_load` (RPC method registered in `KPM_EAM_MOD.DLL`), `kpm_link.shop_check`, `kpm_link.LPAC00`
 - **Mechanism**:
-  1. Searches the Asphyxia database for an existing `profile` belonging to `lpac@asphyxia`.
-  2. If found, extracts the requested girlfriend data types (`recv_csv`).
-  3. Encodes Shift-JIS strings and binary blobs in Base64.
-  4. Returns the converted records in `<player><record>` containers.
+  1. Automatic inheritance on first login: When a new card is registered (`!profile`), the server directly parses `savedata/lpac@asphyxia.db` via native `fs` and initializes the LPM profile with the player's LPAC girlfriend (Manaka/Rinko/Nene), real name, birthday, blood type, and hairstyle.
+  2. If the client queries `klp_link.data_load` / `kpm_link.LPAC00`, returns converted `<player><record>` structures with Base64-encoded strings and bindata.
 
 ---
 
