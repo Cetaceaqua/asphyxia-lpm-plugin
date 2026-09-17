@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
-import { Profile, PlayerLog, createDefaultPlayerLog } from "../models/profile";
+import { Profile, PlayerLog, KanojoType, createDefaultPlayerLog } from "../models/profile";
 
 /**
  * Extra Handlers: Ranking, Event Logs, and Cross-Game Linkage with LovePlus ARCADE (LPAC)
