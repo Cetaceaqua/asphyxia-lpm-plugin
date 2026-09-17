@@ -61,17 +61,20 @@ export const tf_setting_config: EPR = async (info, data, send) => {
   const key = $(data).str("key", "") || $(data).str("data.key", "");
   const currentIdx = configRequestIndex++;
 
-  // Feature bit string: 50 characters, all '1' enables KPU, IX8, K70, KLP, NLP, IR, Campaigns, DATE, JPSLOT
-  // Index 3 is '1' which triggers "CEamuseControl::ConfigRecieve KLP ON" and unlocks kpm_link.LPAC00
+  // Reverse engineering sub_54BE10 in game confirms exact keys sent by client:
+  // - "setinfo2": 50-character feature bit string (enables KPU, IX8, K70, KLP, etc.)
+  // - "po_rate": Payout rate setting (e.g. "1")
+  // - "game_balance": Game balance setting (e.g. "1")
+  // - "real_date": Real date setting (e.g. "1")
   const featureBits = "1".repeat(50);
 
   let val = "1";
-  if (key === "0" || key === "feature" || key === "config0" || (key === "" && currentIdx % 4 === 0)) {
+  if (key === "setinfo2" || key === "0" || key === "feature" || key === "config0") {
     val = featureBits;
-  } else if (key === "1" || key === "2" || key === "3") {
+  } else if (key === "po_rate" || key === "game_balance" || key === "real_date" || key === "1" || key === "2" || key === "3") {
     val = "1";
   } else if (key === "") {
-    // If key is not sent by client, follow the 4-step boot sequence (0: feature, 1: PO, 2: Balance, 3: RealDate)
+    // If key is omitted, fallback to 4-step round-robin
     val = (currentIdx % 4 === 0) ? featureBits : "1";
   }
 

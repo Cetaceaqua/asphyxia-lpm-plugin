@@ -27,18 +27,40 @@ export const player_pload: EPR = async (info, data, send) => {
       profile = inheritProfileFromLpac(refId);
     }
 
-    // 2. If no LPAC save exists or linkage disabled, fallback to clean default
-    if (!profile) {
-      profile = createDefaultProfile();
-      console.log(`[LPM:player.pload] Created new default profile for refId=${refId}`);
-    } else {
+    if (profile) {
       console.log(`[LPM:player.pload] Created profile inherited from LPAC for refId=${refId}`);
-    }
-
-    try {
-      await DB.Insert<Profile>(refId, profile);
-    } catch {
-      // Ignore insert collision
+      try {
+        await DB.Insert<Profile>(refId, profile);
+      } catch {
+        // Ignore insert collision
+      }
+    } else {
+      // 2. Pure new card (or LPAC link disabled/not found):
+      // DO NOT automatically create a default "彼氏" profile here!
+      // Return an empty profile with empty real_name and nick_name.
+      // The game client's CEamuseData::GetProfileData (0x00555D40) will detect
+      // strlen(real_name) == 0, return false, and automatically launch the authentic
+      // in-game Mode 3 (CGameCharaSelect) girlfriend selection, naming, and birthday setup!
+      console.log(`[LPM:player.pload] No profile found for refId=${refId}. Reporting uninitialized profile to trigger in-game CharaSelect & Naming workflow (Mode 3)`);
+      return send.object({
+        data: {
+          real_name: K.ITEM("str", ""),
+          nick_name: K.ITEM("str", ""),
+          nick_id: K.ITEM("u32", 0),
+          birth_month: K.ITEM("u16", 0),
+          birth_day: K.ITEM("u16", 0),
+          blood_type: K.ITEM("u16", 0),
+          kanojo: K.ITEM("u16", 0),
+          hair_style: K.ITEM("u16", 0),
+          hair_color: K.ITEM("u16", 0),
+          real_date: K.ARRAY("u16", [0, 0, 0, 0, 0, 0, 0, 0]),
+          reserved: K.ARRAY("u16", [0, 0, 0, 0, 0]),
+          total_play: K.ITEM("u32", 0),
+          last_bet: K.ITEM("str", ""),
+          last_play: K.ITEM("str", ""),
+          reserved2: K.ARRAY("u32", [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+        },
+      });
     }
   }
 
