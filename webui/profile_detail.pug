@@ -1,0 +1,232 @@
+//DATA//
+    profile: DB.FindOne(refid, { collection: 'profile' })
+    playerlog: DB.FindOne(refid, { collection: 'playerlog' })
+-
+    const p = profile || {};
+    const log = playerlog || {};
+
+    const realName = p.real_name || "彼氏";
+    const nickName = p.nick_name || "彼氏";
+    const kanojoId = p.kanojo !== undefined ? p.kanojo : 0;
+    const birthMonth = p.birth_month || 9;
+    const birthDay = p.birth_day || 12;
+    const bloodType = p.blood_type || 1;
+    const hairStyle = p.hair_style || 1;
+    const hairColor = p.hair_color || 1;
+
+    const coldata = p.coldata || [];
+    // 38 items (0..37) + 19 dresses (64..82) = 57 valid collectable assets
+    const validColdata = coldata.slice(0, 38).concat(coldata.slice(64, 83));
+    const unlockedItems = validColdata.filter(x => x > 0).length;
+    const totalItems = 57;
+    const unlockPercent = Math.min(100, Math.round((unlockedItems / totalItems) * 100));
+
+    const kanojoNames = ["高嶺 愛花 (Manaka)", "小早川 凛子 (Rinko)", "姉ヶ崎 寧々 (Nene)"];
+    const bloodTypes = { 1: "A 型", 2: "O 型", 3: "B 型", 4: "AB 型" };
+
+.content
+    h2.title.is-4 LovePlus MEDAL 玩家档案详情
+    p.subtitle.is-6 卡号 (Ref ID): #{refid}
+
+    .columns
+        .column.is-6
+            .card
+                header.card-header
+                    p.card-header-title 💖 カノジョ与基本设定 (Girlfriend & Player Info)
+                .card-content
+                    .field
+                        label.label 玩家本名 (Real Name)
+                        .control
+                            input.input#real_name(type="text", value=realName, maxlength="16")
+                    .field
+                        label.label 玩家昵称 (Nickname)
+                        .control
+                            input.input#nick_name(type="text", value=nickName, maxlength="16")
+                    .field
+                        label.label 恋人选择 (Girlfriend)
+                        .control
+                            .select.is-fullwidth
+                                select#kanojo
+                                    each name, idx in kanojoNames
+                                        option(value=idx, selected=(kanojoId === idx))= name
+                    .columns
+                        .column.is-6
+                            .field
+                                label.label 诞生日 (月)
+                                .control
+                                    .select.is-fullwidth
+                                        select#birth_month
+                                            - for (let m = 1; m <= 12; m++)
+                                                option(value=m, selected=(birthMonth === m))= m + " 月"
+                        .column.is-6
+                            .field
+                                label.label 诞生日 (日)
+                                .control
+                                    .select.is-fullwidth
+                                        select#birth_day
+                                            - for (let d = 1; d <= 31; d++)
+                                                option(value=d, selected=(birthDay === d))= d + " 日"
+                    .columns
+                        .column.is-4
+                            .field
+                                label.label 血液型
+                                .control
+                                    .select.is-fullwidth
+                                        select#blood_type
+                                            each label, bt in bloodTypes
+                                                option(value=bt, selected=(bloodType === Number(bt)))= label
+                        .column.is-4
+                            .field
+                                label.label 发型编号 (Hair Style)
+                                .control
+                                    input.input#hair_style(type="number", min="0", max="15", value=hairStyle)
+                        .column.is-4
+                            .field
+                                label.label 发色编号 (Hair Color)
+                                .control
+                                    input.input#hair_color(type="number", min="0", max="7", value=hairColor)
+
+        .column.is-6
+            .card
+                header.card-header
+                    p.card-header-title 👗 物品与服装收藏馆 (Closet & Costumes)
+                .card-content
+                    .level.is-mobile
+                        .level-item.has-text-centered
+                            div
+                                p.heading 已解锁道具与服装
+                                p.title.is-3 #{unlockedItems} / #{totalItems}
+                        .level-item.has-text-centered
+                            div
+                                p.heading 收集进度
+                                p.title.is-3 #{unlockPercent}%
+
+                    progress.progress.is-primary(value=unlockedItems, max=totalItems)
+
+                    .notification.is-light
+                        p.is-size-7
+                            strong 收集品与服装资产分布：
+                            br
+                            | • 
+                            code coldata000
+                            |  ~ 
+                            code coldata037
+                            | ：38 件小道具与饰品（头饰、眼镜、挂件、生日礼物、女友专属礼物及 3DS 特典）
+                            br
+                            | • 
+                            code coldata064
+                            |  ~ 
+                            code coldata082
+                            | ：19 套服装（16 套通用制服、私服、泳装等 + 3 套女友专属特别装扮）
+                            br
+                            span.has-text-grey 注：其余槽位为未分配保留位，置空以防游戏衣柜发生栈溢出或非法模型崩溃。
+
+                    .buttons
+                        button.button.is-primary.is-fullwidth#btn-unlock-all
+                            span.icon
+                                i.fas.fa-magic
+                            span ✨ 一键解锁全部有效物品与服装 (57 件)
+                        button.button.is-danger.is-outlined.is-fullwidth#btn-reset-all
+                            span.icon
+                                i.fas.fa-undo
+                            span 🔄 清空全部物品与服装 (恢复初始)
+
+            .card(style="margin-top: 1.5rem;")
+                header.card-header
+                    p.card-header-title 📊 游戏统计数据 (Play Log & Statistics)
+                .card-content
+                    .columns.is-multiline
+                        .column.is-6
+                            .field
+                                label.label 累计游戏局数
+                                .control
+                                    input.input#total_game(type="number", value=(log.total_game || 0))
+                        .column.is-6
+                            .field
+                                label.label 累计投注勋章
+                                .control
+                                    input.input#total_bet(type="number", value=(log.total_bet || 0))
+                        .column.is-6
+                            .field
+                                label.label 累计中奖勋章
+                                .control
+                                    input.input#total_win(type="number", value=(log.total_win || 0))
+                        .column.is-6
+                            .field
+                                label.label 普通关游玩数
+                                .control
+                                    input.input#normal_play(type="number", value=(log.normal_play || 0))
+                        .column.is-6
+                            .field
+                                label.label 约会游玩数
+                                .control
+                                    input.input#date_play(type="number", value=(log.date_play || 0))
+                        .column.is-6
+                            .field
+                                label.label JP 挑战游玩数
+                                .control
+                                    input.input#jp_play(type="number", value=(log.jp_play || 0))
+
+    .field.is-grouped.is-grouped-right(style="margin-top: 2rem;")
+        .control
+            button.button.is-success.is-medium#btn-save-profile
+                span.icon
+                    i.fas.fa-save
+                span 💾 保存玩家档案设定
+
+script.
+    const refid = "#{refid}";
+
+    document.getElementById("btn-save-profile").addEventListener("click", function() {
+        const data = {
+            refid: refid,
+            real_name: document.getElementById("real_name").value,
+            nick_name: document.getElementById("nick_name").value,
+            kanojo: document.getElementById("kanojo").value,
+            birth_month: document.getElementById("birth_month").value,
+            birth_day: document.getElementById("birth_day").value,
+            blood_type: document.getElementById("blood_type").value,
+            hair_style: document.getElementById("hair_style").value,
+            hair_color: document.getElementById("hair_color").value,
+            total_game: document.getElementById("total_game").value,
+            total_bet: document.getElementById("total_bet").value,
+            total_win: document.getElementById("total_win").value,
+            normal_play: document.getElementById("normal_play").value,
+            date_play: document.getElementById("date_play").value,
+            jp_play: document.getElementById("jp_play").value,
+        };
+
+        emit("updateProfile", data).then(function() {
+            alert("档案保存成功！");
+            location.reload();
+        }).catch(function(err) {
+            alert("保存失败: " + err);
+        });
+    });
+
+    document.getElementById("btn-unlock-all").addEventListener("click", function() {
+        if (!confirm("确定要一键解锁此档案的全部 57 件有效物品与服装吗？\n包含 38 件道具饰品与 19 套全角色服装（制服/私服/泳装等），解锁后进入游戏可正常打开衣柜与背包。")) {
+            return;
+        }
+
+        emit("unlockAllItems", { refid: refid }).then(function() {
+            alert("全部 57 件有效物品与服装已成功解锁！");
+            location.reload();
+        }).catch(function(err) {
+            alert("解锁失败: " + err);
+        });
+    });
+
+    document.getElementById("btn-reset-all").addEventListener("click", function() {
+        if (!confirm("确定要清空此档案的所有物品与服装吗？\n这将把全部道具与服装的拥有状态重置为 0。")) {
+            return;
+        }
+
+        emit("resetAllItems", { refid: refid }).then(function() {
+            alert("物品与服装已清空！");
+            location.reload();
+        }).catch(function(err) {
+            alert("清空失败: " + err);
+        });
+    });
+

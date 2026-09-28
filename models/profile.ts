@@ -18,7 +18,7 @@ export interface Profile {
   nick_id?: number;        // 呼び名ID
   birth_month?: number;    // 誕生月 (1-12)
   birth_day?: number;      // 誕生日 (1-31)
-  blood_type?: number;     // 血液型 (1: A, 2: B, 3: AB, 4: O)
+  blood_type?: number;     // 血液型 (1: A, 2: O, 3: B, 4: AB)
   kanojo?: number;         // カノジョ (0: Manaka, 1: Rinko, 2: Nene)
   hair_style?: number;     // 髪型
   hair_color?: number;     // 髪色
@@ -31,32 +31,53 @@ export interface Profile {
   last_bet?: string;       // 最終ベット日時 ("YYYY-MM-DD HH:MM")
   last_play?: string;      // 最終プレイ日時 ("YYYY-MM-DD HH:MM")
 
-  // Date Memory (思い出アルバム)
-  date_result?: number;    // デート結果ステータス
-  dress_request?: number;  // 衣装リクエストフラグ
-  date_time?: string;      // デート記録日時
+  // Date Memory (思い出アルバム - 32 records of u16 date_result, 5 dress_requests, 32 u32 epoch timestamps)
+  date_result?: number[];  // 32 x u16 (sub_10006090)
+  dress_request?: number[];// 5 x u16
+  date_time?: number[];    // 32 x u32 (epoch seconds)
 
-  // Jackpot Memory (JPアルバム)
-  jp_win?: number;         // JP獲得メダル枚数
-  jp_time?: string;        // JP達成日時
+  // Jackpot Memory (JPアルバム - 32 records of u16 jp_win medals, 32 u32 epoch timestamps)
+  jp_win?: number[];       // 32 x u16 (sub_10006300)
+  jp_time?: number[];      // 32 x u32 (epoch seconds)
+
+  // Collection Data (アイテム・衣装クローゼット, 128 elements: coldata000..coldata127)
+  coldata?: number[];      // 0: 未所持, 1: 所持/解禁
 }
 
 export interface PlayerLog {
   collection: "playerlog";
-  total_game: number;
-  total_bet: number;
-  total_win: number;
-  normal_play: number;
-  normal_bet: number;
-  normal_win: number;
-  normal_reach: number;
-  date_play: number;
-  date_bet: number;
-  date_win: number;
-  date_reach: number;
-  jp_play: number;
-  jp_bet: number;
-  jp_win: number;
+  // Sub_10008D20 / Sub_100090A0 authentic game log structure
+  total_game: number;      // u32
+  total_bet: number;       // u32
+  total_win: number;       // u32
+  sub_chara: number[];     // 4 x u16
+  sub_chara2: number[];    // 4 x u16
+  normal_game: number[];   // 3 x u32
+  normal_bet: number[];    // 3 x u32
+  normal_win: number[];    // 3 x u32
+  normal_panel: number[];  // 3 x u32
+  normal_shuffle: number[];// 3 x u32
+  normal_slot: number[];   // 3 x u16
+  normal_event: number[];  // 3 x u16
+  date_start: number;      // u16
+  date_1st: number;        // u16
+  date_2nd: number;        // u16
+  date_3rd: number;        // u16
+  date_spot: number;       // u16
+  date_skin: number;       // u16
+  date_kiss: number;       // u16
+  jp_start: number;        // u16
+  jp_game: number;         // u16
+  jp_times: number;        // u16
+  jp_win: number;          // u32
+  jp_jpwin: number;        // u32
+  reserved: number[];      // 10 x u32
+  reserved2: number[];     // 10 x u16
+
+  // Legacy WebUI helper aliases (optional)
+  normal_play?: number;
+  date_play?: number;
+  jp_play?: number;
 }
 
 export function createDefaultPlayerLog(): PlayerLog {
@@ -65,17 +86,32 @@ export function createDefaultPlayerLog(): PlayerLog {
     total_game: 0,
     total_bet: 0,
     total_win: 0,
-    normal_play: 0,
-    normal_bet: 0,
-    normal_win: 0,
-    normal_reach: 0,
-    date_play: 0,
-    date_bet: 0,
-    date_win: 0,
-    date_reach: 0,
-    jp_play: 0,
-    jp_bet: 0,
+    sub_chara: [0, 0, 0, 0],
+    sub_chara2: [0, 0, 0, 0],
+    normal_game: [0, 0, 0],
+    normal_bet: [0, 0, 0],
+    normal_win: [0, 0, 0],
+    normal_panel: [0, 0, 0],
+    normal_shuffle: [0, 0, 0],
+    normal_slot: [0, 0, 0],
+    normal_event: [0, 0, 0],
+    date_start: 0,
+    date_1st: 0,
+    date_2nd: 0,
+    date_3rd: 0,
+    date_spot: 0,
+    date_skin: 0,
+    date_kiss: 0,
+    jp_start: 0,
+    jp_game: 0,
+    jp_times: 0,
     jp_win: 0,
+    jp_jpwin: 0,
+    reserved: new Array(10).fill(0),
+    reserved2: new Array(10).fill(0),
+    normal_play: 0,
+    date_play: 0,
+    jp_play: 0,
   };
 }
 
@@ -103,10 +139,11 @@ export function createDefaultProfile(): Profile {
     total_play: 0,
     last_bet: dateStr,
     last_play: dateStr,
-    date_result: 0,
-    dress_request: 0,
-    date_time: dateStr,
-    jp_win: 0,
-    jp_time: dateStr,
+    date_result: new Array(32).fill(0),
+    dress_request: new Array(5).fill(0),
+    date_time: new Array(32).fill(0),
+    jp_win: new Array(32).fill(0),
+    jp_time: new Array(32).fill(0),
+    coldata: new Array(128).fill(0),
   };
 }

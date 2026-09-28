@@ -200,22 +200,45 @@ export const player_ptime: EPR = async (info, data, send) => {
 
 /**
  * kpm_player.dload - Load Date Memory (思い出アルバム)
+ * Reverse engineered from sub_10006090 in KPM_EAM_MOD.DLL:
+ * Expects ROOT-LEVEL nodes (no data wrapper!):
+ * - date_result: 32 x u16 (Type 5, 64 bytes)
+ * - dress_request: 5 x u16 (Type 5, 10 bytes)
+ * - date_time: 32 x u32 (Type 7, 128 bytes epoch seconds)
  */
 export const player_dload: EPR = async (info, data, send) => {
   const refId = getRefId(data);
   const profile = await DB.FindOne<Profile>(refId, { collection: "profile" });
 
+  const date_result = profile?.date_result && profile.date_result.length === 32
+    ? profile.date_result
+    : new Array(32).fill(0);
+
+  const dress_request = profile?.dress_request && profile.dress_request.length === 5
+    ? profile.dress_request
+    : new Array(5).fill(0);
+
+  const date_time = profile?.date_time && profile.date_time.length === 32
+    ? profile.date_time
+    : new Array(32).fill(0);
+
+  console.log(`[LPM:player.dload] Sending Date Memories at root level for refId=${refId}`);
+
   return send.object({
-    data: {
-      date_result: K.ITEM("s32", profile?.date_result ?? 0),
-      dress_request: K.ITEM("s32", profile?.dress_request ?? 0),
-      date_time: K.ITEM("str", profile?.date_time || "2026-09-12 12:00"),
-    },
+    date_result: K.ARRAY("u16", date_result),
+    dress_request: K.ARRAY("u16", dress_request),
+    date_time: K.ARRAY("u32", date_time),
   });
 };
 
 /**
  * kpm_player.dsave - Save Date Memory (思い出アルバム)
+ * Reverse engineered from sub_10006170 in KPM_EAM_MOD.DLL:
+ * Client uploads at root level:
+ * - userid: string (Type 11)
+ * - date_result: array of u16 (Type 47 / 5)
+ * - dress_request: array of u16 (Type 47 / 5)
+ * - date_time: array of u32 (Type 47 / 7)
  */
 export const player_dsave: EPR = async (info, data, send) => {
   const refId = getRefId(data);
@@ -224,31 +247,62 @@ export const player_dsave: EPR = async (info, data, send) => {
     if (!profile) {
       profile = createDefaultProfile();
     }
-    profile.date_result = $(data).number("date_result", profile.date_result ?? 0);
-    profile.dress_request = $(data).number("dress_request", profile.dress_request ?? 0);
-    profile.date_time = $(data).str("date_time", profile.date_time || "2026-09-12 12:00");
+
+    const date_result = $(data).numbers("date_result") || $(data).numbers("data.date_result");
+    if (date_result && date_result.length > 0) {
+      profile.date_result = date_result;
+    }
+
+    const dress_request = $(data).numbers("dress_request") || $(data).numbers("data.dress_request");
+    if (dress_request && dress_request.length > 0) {
+      profile.dress_request = dress_request;
+    }
+
+    const date_time = $(data).numbers("date_time") || $(data).numbers("data.date_time");
+    if (date_time && date_time.length > 0) {
+      profile.date_time = date_time;
+    }
+
     await DB.Upsert<Profile>(refId, { collection: "profile" }, profile);
+    console.log(`[LPM:player.dsave] Saved Date Memories for refId=${refId}`);
   }
   return send.success();
 };
 
 /**
  * kpm_player.jload - Load Jackpot Record (JPアルバム)
+ * Reverse engineered from sub_10006300 in KPM_EAM_MOD.DLL:
+ * Expects ROOT-LEVEL nodes (no data wrapper!):
+ * - jp_win: 32 x u16 (Type 5, 64 bytes)
+ * - jp_time: 32 x u32 (Type 7, 128 bytes epoch seconds)
  */
 export const player_jload: EPR = async (info, data, send) => {
   const refId = getRefId(data);
   const profile = await DB.FindOne<Profile>(refId, { collection: "profile" });
 
+  const jp_win = profile?.jp_win && profile.jp_win.length === 32
+    ? profile.jp_win
+    : new Array(32).fill(0);
+
+  const jp_time = profile?.jp_time && profile.jp_time.length === 32
+    ? profile.jp_time
+    : new Array(32).fill(0);
+
+  console.log(`[LPM:player.jload] Sending JP Memories at root level for refId=${refId}`);
+
   return send.object({
-    data: {
-      jp_win: K.ITEM("s32", profile?.jp_win ?? 0),
-      jp_time: K.ITEM("str", profile?.jp_time || "2026-09-12 12:00"),
-    },
+    jp_win: K.ARRAY("u16", jp_win),
+    jp_time: K.ARRAY("u32", jp_time),
   });
 };
 
 /**
  * kpm_player.jsave - Save Jackpot Record (JPアルバム)
+ * Reverse engineered from sub_10006400 in KPM_EAM_MOD.DLL:
+ * Client uploads at root level:
+ * - userid: string (Type 11)
+ * - jp_win: array of u16 (Type 47 / 5)
+ * - jp_time: array of u32 (Type 47 / 7)
  */
 export const player_jsave: EPR = async (info, data, send) => {
   const refId = getRefId(data);
@@ -257,9 +311,19 @@ export const player_jsave: EPR = async (info, data, send) => {
     if (!profile) {
       profile = createDefaultProfile();
     }
-    profile.jp_win = $(data).number("jp_win", profile.jp_win ?? 0);
-    profile.jp_time = $(data).str("jp_time", profile.jp_time || "2026-09-12 12:00");
+
+    const jp_win = $(data).numbers("jp_win") || $(data).numbers("data.jp_win");
+    if (jp_win && jp_win.length > 0) {
+      profile.jp_win = jp_win;
+    }
+
+    const jp_time = $(data).numbers("jp_time") || $(data).numbers("data.jp_time");
+    if (jp_time && jp_time.length > 0) {
+      profile.jp_time = jp_time;
+    }
+
     await DB.Upsert<Profile>(refId, { collection: "profile" }, profile);
+    console.log(`[LPM:player.jsave] Saved JP Memories for refId=${refId}`);
   }
   return send.success();
 };
